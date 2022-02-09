@@ -15,6 +15,8 @@ namespace SistemaCore_BDEO.Controllers
     [RoutePrefix("api/v1/SelfAdjust")]
     public class SelfAdjustController : ApiController
     {
+        private JObject result = new JObject();
+
         private string BaseUrl
         {
             get { return ConfigurationManager.AppSettings["selfadjust"]; }
@@ -40,26 +42,16 @@ namespace SistemaCore_BDEO.Controllers
 
                     var respuesta = await client.PostAsJsonAsync(url, model);
 
-                    if (respuesta.IsSuccessStatusCode)
-                    {
+                    var cuerpo = await respuesta.Content.ReadAsStringAsync();
 
-                        var cuerpo = await respuesta.Content.ReadAsStringAsync();
+                    result = JObject.Parse(cuerpo);
 
-                        var result = JObject.Parse(cuerpo);
-
-                        //var resp = JsonSerializer.Deserialize<Login>(cuerpo, jsonSerializerOptions);
-
-                        return Ok(result);
-                    }
-                    else
-                    {
-                        throw new Exception("Error" + respuesta.StatusCode);
-                    }
+                    return NewMethod(respuesta,cuerpo);
                 }
             }
-            catch (Exception e)
+            catch (HttpResponseException e)
             {
-                throw e.InnerException ?? e;
+                throw new HttpResponseException(e.Response);
             }
         }
 
@@ -86,26 +78,14 @@ namespace SistemaCore_BDEO.Controllers
 
                     var respuesta = await client.PostAsJsonAsync(url, model);
 
-                    if (respuesta.IsSuccessStatusCode)
-                    {
+                    var cuerpo = await respuesta.Content.ReadAsStringAsync();                    
 
-                        var cuerpo = await respuesta.Content.ReadAsStringAsync();
-
-                        var result = JObject.Parse(cuerpo);
-
-                        //var resp = JsonSerializer.Deserialize<Login>(cuerpo, jsonSerializerOptions);
-
-                        return Ok(result);
-                    }
-                    else
-                    {
-                        throw new Exception("Error" + respuesta.StatusCode);
-                    }
+                    return NewMethod(respuesta,cuerpo);
                 }
             }
-            catch (Exception e)
+            catch (HttpResponseException e)
             {
-                throw e.InnerException ?? e;
+                throw new HttpResponseException(e.Response);
             }
         }
 
@@ -129,24 +109,15 @@ namespace SistemaCore_BDEO.Controllers
 
                     var respuesta = await httpCliente.GetAsync(url);
 
-                    if (respuesta.IsSuccessStatusCode)
-                    {
+                    var cuerpo = await respuesta.Content.ReadAsStringAsync();
+                    
 
-                        var cuerpo = await respuesta.Content.ReadAsStringAsync();
-
-                        var result = JObject.Parse(cuerpo);
-
-                        return Ok(result);
-                    }
-                    else
-                    {
-                        throw new Exception("Error" + respuesta.StatusCode);
-                    }
+                    return NewMethod(respuesta,cuerpo);
                 }
             }
-            catch (Exception e)
+            catch (HttpResponseException e)
             {
-                throw e.InnerException ?? e;
+                throw new HttpResponseException(e.Response);
             }
 
         }
@@ -173,27 +144,15 @@ namespace SistemaCore_BDEO.Controllers
 
                     var respuesta = await httpCliente.PutAsJsonAsync(url, model);
 
-                    if (respuesta.IsSuccessStatusCode)
-                    {
+                    var cuerpo = await respuesta.Content.ReadAsStringAsync();                    
 
-                        var cuerpo = await respuesta.Content.ReadAsStringAsync();
-
-                        var result = JObject.Parse(cuerpo);
-
-                        //var resp = JsonSerializer.Deserialize<Login>(cuerpo, jsonSerializerOptions);
-
-                        return Ok(result);
-                    }
-                    else
-                    {
-                        throw new Exception("Error" + respuesta.StatusCode);
-                    }
+                    return NewMethod(respuesta,cuerpo);
 
                 }
             }
-            catch (Exception e)
+            catch (HttpResponseException e)
             {
-                throw e.InnerException ?? e;
+                throw new HttpResponseException(e.Response);
             }
 
         }
@@ -218,28 +177,80 @@ namespace SistemaCore_BDEO.Controllers
 
                     var respuesta = await httpCliente.DeleteAsync(url);
 
-                    if (respuesta.IsSuccessStatusCode)
-                    {
+                    var cuerpo = await respuesta.Content.ReadAsStringAsync();                    
 
-                        var cuerpo = await respuesta.Content.ReadAsStringAsync();
-
-                        var result = JObject.Parse(cuerpo);
-
-
-                        return Ok(result);
-                    }
-                    else
-                    {
-                        throw new Exception("Error" + respuesta.StatusCode);
-                    }
+                    return NewMethod(respuesta, cuerpo);
 
                 }
             }
-            catch (Exception e)
+            catch (HttpResponseException e)
             {
-                throw e.InnerException ?? e;
+                throw new HttpResponseException(e.Response);
             }
 
+        }
+
+        public IHttpActionResult NewMethod(HttpResponseMessage respuesta, string cuerpo)
+        {
+            var res = cuerpo.Replace("\"", " ").Trim();
+
+            switch (respuesta.StatusCode)
+            {
+
+                case HttpStatusCode.OK:
+
+                    result = JObject.Parse(cuerpo);
+                    return Ok(result);
+
+                case HttpStatusCode.Unauthorized:
+
+                   
+                    return Content(HttpStatusCode.Unauthorized, res);
+
+
+                case HttpStatusCode.NoContent:
+
+                    result = JObject.Parse(cuerpo);
+                    return Content(HttpStatusCode.NoContent, result);
+
+
+                case HttpStatusCode.BadRequest:
+
+                    result = JObject.Parse(cuerpo);
+                    return Content(HttpStatusCode.BadRequest, result);
+
+
+                case HttpStatusCode.Forbidden:
+
+                    result = JObject.Parse(cuerpo);
+                    return Content(HttpStatusCode.Forbidden, result);
+
+
+                case HttpStatusCode.NotFound:
+
+                    result = JObject.Parse(cuerpo);
+                    return Content(HttpStatusCode.NotFound, result);
+
+
+                case HttpStatusCode.MethodNotAllowed:
+
+                    result = JObject.Parse(cuerpo);
+                    return Content(HttpStatusCode.MethodNotAllowed, result);
+
+                case HttpStatusCode.NotImplemented:
+
+                    result = JObject.Parse(cuerpo);
+                    return Content(HttpStatusCode.NotImplemented, result);
+
+                case HttpStatusCode.BadGateway:
+                    result = JObject.Parse(cuerpo);
+                    return Content(HttpStatusCode.MethodNotAllowed, result);
+
+                default:
+
+                    throw new HttpResponseException(respuesta.StatusCode);
+
+            }
         }
     }
 }

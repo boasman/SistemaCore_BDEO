@@ -11,7 +11,7 @@ using System.Web.Http;
 
 namespace SistemaCore_BDEO.Controllers
 {
-    [RoutePrefix("api/v1/Intervention")]
+    [RoutePrefix("api/Intervention")]
     public class InterventionController : ApiController
     {
 
@@ -22,12 +22,12 @@ namespace SistemaCore_BDEO.Controllers
             get { return ConfigurationManager.AppSettings["intervention"]; }
         }
 
+
+
         [HttpPost]
         [Route("Login")]
         public async Task<IHttpActionResult> Login(object login)
         {
-
-            
 
             try
             {
@@ -40,122 +40,104 @@ namespace SistemaCore_BDEO.Controllers
 
                     var cuerpo = await respuesta.Content.ReadAsStringAsync();
 
-                    result = JObject.Parse(cuerpo);
-
-                    return NewMethod(respuesta);
+                    return NewMethod(respuesta, cuerpo);
 
                 }
             }
-            catch (HttpResponseException e)            
+            catch (HttpResponseException e)
             {
-
-
                 throw new HttpResponseException(e.Response);
             }
 
         }
 
-        public IHttpActionResult NewMethod(HttpResponseMessage respuesta)
-        {
-            switch (respuesta.StatusCode)
-            {
-
-                case HttpStatusCode.OK:
-
-                    return Ok(result);
-
-                case HttpStatusCode.Unauthorized:
-
-                    /*"Access Forbidden: Access token not found"*/
-                    return Content(HttpStatusCode.Unauthorized, result);
-
-
-                case HttpStatusCode.NoContent:
-
-                    return Content(HttpStatusCode.NoContent, result);
-
-
-                case HttpStatusCode.BadRequest:
-
-                    return Content(HttpStatusCode.BadRequest, result);
-
-
-                case HttpStatusCode.Forbidden:
-
-                    return Content(HttpStatusCode.Forbidden, result);
-
-
-                case HttpStatusCode.NotFound:
-
-                    return Content(HttpStatusCode.NotFound, result);
-
-
-                case HttpStatusCode.MethodNotAllowed:
-
-                    return Content(HttpStatusCode.MethodNotAllowed, result);
-
-                case HttpStatusCode.NotImplemented:
-
-
-                    return Content(HttpStatusCode.NotImplemented, result);
-
-                default:
-
-                    throw new HttpResponseException(respuesta.StatusCode);
-
-            }
-        }
-
 
         //TODO
-        [Route("generate-agent-url")]
         [HttpPost]
+        [Route("generate-agent-url")]       
         public async Task<IHttpActionResult> Generate_Url(object agent)
         {
-            var token = Request.Headers.GetValues("access_token").FirstOrDefault();
-
-            using (var client = new HttpClient())
-            {
-                var key = ConfigurationManager.AppSettings["gen-url"];
-                var url = client.BaseAddress = new Uri(key);
-
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                client.DefaultRequestHeaders.Add("access_token", token);
-
-                var respuesta = await client.PostAsJsonAsync(url, agent);
-
-                if (respuesta.IsSuccessStatusCode)
-                {
-
-                    var cuerpo = await respuesta.Content.ReadAsStringAsync();
-
-                    var result = JObject.Parse(cuerpo);
-
-                    return Ok(result);
-                }
-                else
-                {
-                    throw new Exception("Error" + respuesta.StatusCode);
-                }
-
-            }
-
-        }
-
-        //Listo
-        [HttpPost]
-        [Route()]
-        public async Task<IHttpActionResult> InterventionPost(object model)
-        {
-            JObject result = new JObject();
             var token = Request.Headers.GetValues("access_token").FirstOrDefault();
 
             try
             {
                 using (var client = new HttpClient())
                 {
-                    var url = client.BaseAddress = new Uri(BaseUrl);
+                    var key = ConfigurationManager.AppSettings["gen-url"];
+                    var url = client.BaseAddress = new Uri(key);
+
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    client.DefaultRequestHeaders.Add("access_token", token);
+
+                    var respuesta = await client.PostAsJsonAsync(url, agent);
+
+                    var cuerpo = await respuesta.Content.ReadAsStringAsync();
+
+                    return NewMethod(respuesta, cuerpo);
+
+
+                }
+            }
+            catch (HttpResponseException e)
+            {
+                throw new HttpResponseException(e.Response);
+            }
+
+        }
+
+        //Listo
+        [HttpPost]        
+        [Route()]
+        public async Task<IHttpActionResult> Post(object model, [FromUri]string access_token)
+        {
+            
+            //string token = string.Empty;
+
+            
+            //token = Request.Headers.GetValues("access_token").FirstOrDefault();
+
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    
+                    Uri url = client.BaseAddress = new Uri(BaseUrl);
+
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    client.DefaultRequestHeaders.Add("access_token", access_token);
+
+                    var respuesta = await client.PostAsJsonAsync(url, model);
+
+                    var cuerpo = await respuesta.Content.ReadAsStringAsync();                   
+
+                    return NewMethod(respuesta,cuerpo);
+
+                }
+            }
+            catch (HttpResponseException e)
+            {
+                throw new HttpResponseException(e.Response);
+            }
+        }
+
+        //Listo
+        [HttpPost]
+        [Route]        
+        public async Task<IHttpActionResult> Post(object model)
+        {
+
+            string token = string.Empty;
+
+            token = Request.Headers.GetValues("access_token").FirstOrDefault();           
+
+            try
+            {
+                using (var client = new HttpClient())
+                {
+
+                    Uri url = client.BaseAddress = new Uri(BaseUrl);
 
                     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
@@ -163,65 +145,14 @@ namespace SistemaCore_BDEO.Controllers
 
                     var respuesta = await client.PostAsJsonAsync(url, model);
 
-                    switch (respuesta.StatusCode)
-                    {
+                    var cuerpo = await respuesta.Content.ReadAsStringAsync();
 
-                        case HttpStatusCode.OK:
+                    return NewMethod(respuesta, cuerpo);
 
-                            var cuerpo = await respuesta.Content.ReadAsStringAsync();
-
-                             result = JObject.Parse(cuerpo);
-
-                            return Ok(result);
-
-                        case HttpStatusCode.Unauthorized:
-
-                            return Content(HttpStatusCode.Unauthorized, "Access Forbidden: Access token not found");
-
-
-
-
-                        //case HttpStatusCode.NoContent:
-
-
-
-                        //    break;
-
-                        case HttpStatusCode.BadRequest:
-
-                            return BadRequest(result.ToString());
-                            
-                        //case HttpStatusCode.Unauthorized:
-                        //    break;
-
-                        //case HttpStatusCode.Forbidden:
-
-
-                        //    break;
-                        case HttpStatusCode.NotFound:
-
-                            return NotFound();
-
-
-                        //case HttpStatusCode.MethodNotAllowed:
-                        //    break;
-
-                        //case HttpStatusCode.NotImplemented:
-
-
-                        //    break;
-
-                        default:
-
-                            throw new HttpResponseException(respuesta.StatusCode);
-
-                    }
-                   
                 }
             }
             catch (HttpResponseException e)
             {
-                
                 throw new HttpResponseException(e.Response);
             }
         }
@@ -230,9 +161,8 @@ namespace SistemaCore_BDEO.Controllers
         //Listo
         [HttpGet()]
         [Route("users")]
-        public async Task<IHttpActionResult> users()
+        public async Task<IHttpActionResult> users(string type)
         {
-
 
             var token = Request.Headers.GetValues("access_token").FirstOrDefault();
 
@@ -251,25 +181,17 @@ namespace SistemaCore_BDEO.Controllers
 
                     var respuesta = await httpCliente.GetAsync(url);
 
-                    if (respuesta.IsSuccessStatusCode)
-                    {
+                    var cuerpo = await respuesta.Content.ReadAsStringAsync();                   
 
-                        var cuerpo = await respuesta.Content.ReadAsStringAsync();
+                    
 
-                        var result = JObject.Parse(cuerpo);
-
-                        return Ok(result);
-                    }
-                    else
-                    {
-                        throw new Exception("Error" + respuesta.StatusCode);
-                    }
+                    return NewMethod(respuesta,cuerpo);                    
 
                 }
             }
-            catch (Exception e)
+            catch (HttpResponseException e)
             {
-                throw e.InnerException ?? e;
+                throw new HttpResponseException(e.Response);
             }
 
         }
@@ -296,25 +218,17 @@ namespace SistemaCore_BDEO.Controllers
 
                     var respuesta = await httpCliente.GetAsync(url);
 
-                    if (respuesta.IsSuccessStatusCode)
-                    {
+                    var cuerpo = await respuesta.Content.ReadAsStringAsync();
 
-                        var cuerpo = await respuesta.Content.ReadAsStringAsync();
+                    
 
-                        var result = JObject.Parse(cuerpo);
-
-                        return Ok(result);
-                    }
-                    else
-                    {
-                        throw new Exception("Error" + respuesta.StatusCode);
-                    }
+                    return NewMethod(respuesta,cuerpo);
 
                 }
             }
-            catch (Exception e)
+            catch (HttpResponseException e)
             {
-                throw e.InnerException ?? e;
+                throw new HttpResponseException(e.Response);
             }
 
         }
@@ -340,25 +254,17 @@ namespace SistemaCore_BDEO.Controllers
 
                     var respuesta = await httpCliente.GetAsync(url);
 
-                    if (respuesta.IsSuccessStatusCode)
-                    {
+                    var cuerpo = await respuesta.Content.ReadAsStringAsync();
 
-                        var cuerpo = await respuesta.Content.ReadAsStringAsync();
+                   
 
-                        var result = JObject.Parse(cuerpo);
-
-                        return Ok(result);
-                    }
-                    else
-                    {
-                        throw new Exception("Error" + respuesta.StatusCode);
-                    }
+                    return NewMethod(respuesta,cuerpo);
 
                 }
             }
-            catch (Exception e)
+            catch (HttpResponseException e)
             {
-                throw e.InnerException ?? e;
+                throw new HttpResponseException(e.Response);
             }
 
         }
@@ -386,25 +292,17 @@ namespace SistemaCore_BDEO.Controllers
 
                     var respuesta = await httpCliente.PutAsJsonAsync(url, model);
 
-                    if (respuesta.IsSuccessStatusCode)
-                    {
+                    var cuerpo = await respuesta.Content.ReadAsStringAsync();
 
-                        var cuerpo = await respuesta.Content.ReadAsStringAsync();
-
-                        var result = JObject.Parse(cuerpo);
-
-                        return Ok(result);
-                    }
-                    else
-                    {
-                        throw new Exception("Error" + respuesta.StatusCode);
-                    }
+                    
+                    return NewMethod(respuesta,cuerpo);
+                    
 
                 }
             }
-            catch (Exception e)
+            catch (HttpResponseException e)
             {
-                throw e.InnerException ?? e;
+                throw new HttpResponseException(e.Response);
             }
 
         }
@@ -431,27 +329,83 @@ namespace SistemaCore_BDEO.Controllers
 
                     var respuesta = await httpCliente.DeleteAsync(url);
 
-                    if (respuesta.IsSuccessStatusCode)
-                    {
+                    var cuerpo = await respuesta.Content.ReadAsStringAsync();                   
 
-                        var cuerpo = await respuesta.Content.ReadAsStringAsync();
-
-                        var result = JObject.Parse(cuerpo);
-
-                        return Ok(result);
-                    }
-                    else
-                    {
-                        throw new Exception("Error" + respuesta.StatusCode);
-                    }
+                    return NewMethod(respuesta, cuerpo);
 
                 }
             }
-            catch (Exception e)
+            catch (HttpResponseException e)
             {
-                throw e.InnerException ?? e;
+                throw new HttpResponseException(e.Response);
             }
 
+        }
+
+        public IHttpActionResult NewMethod(HttpResponseMessage respuesta, string cuerpo)
+        {
+            var texto = cuerpo.Replace("\"", " ").Trim();
+
+
+            switch (respuesta.StatusCode)
+            {
+
+                case HttpStatusCode.OK:
+
+                    result = JObject.Parse(cuerpo);
+                    return Ok(result);
+
+                case HttpStatusCode.Unauthorized:
+
+                   
+                    return Content(HttpStatusCode.Unauthorized, texto);
+
+
+                case HttpStatusCode.NoContent:
+
+                    result = JObject.Parse(cuerpo);
+                    return Content(HttpStatusCode.NoContent, result);
+
+
+                case HttpStatusCode.BadRequest:
+
+                    
+                    result = JObject.Parse(cuerpo);
+                    return Content(HttpStatusCode.BadRequest, result);
+
+
+                case HttpStatusCode.Forbidden:
+
+                    result = JObject.Parse(cuerpo);
+                    return Content(HttpStatusCode.Forbidden, result);
+
+
+                case HttpStatusCode.NotFound:
+
+                    result = JObject.Parse(cuerpo);
+                    return Content(HttpStatusCode.NotFound, result);
+
+
+                case HttpStatusCode.MethodNotAllowed:
+
+                    result = JObject.Parse(cuerpo);
+                    return Content(HttpStatusCode.MethodNotAllowed, result);
+
+                case HttpStatusCode.NotImplemented:
+
+                    // TODO: ARREGLAR ESTO
+                    result = JObject.Parse(cuerpo);
+                    return Content(HttpStatusCode.NotImplemented, result);
+
+                case HttpStatusCode.BadGateway:
+                    result = JObject.Parse(cuerpo);
+                    return Content(HttpStatusCode.MethodNotAllowed, result);
+
+                default:
+
+                    throw new HttpResponseException(respuesta.StatusCode);
+
+            }
         }
     }
 }
