@@ -33,6 +33,7 @@ namespace SistemaCore_BDEO.Controllers
             {
                 using (var httpCliente = new HttpClient())
                 {
+
                     var key = ConfigurationManager.AppSettings["login"];
                     var url = httpCliente.BaseAddress = new Uri(key);
 
@@ -40,7 +41,9 @@ namespace SistemaCore_BDEO.Controllers
 
                     var cuerpo = await respuesta.Content.ReadAsStringAsync();
 
-                    return NewMethod(respuesta, cuerpo);
+                    var rest = Validacion(cuerpo);
+
+                    return NewMethod(respuesta, rest);
 
                 }
             }
@@ -51,10 +54,9 @@ namespace SistemaCore_BDEO.Controllers
 
         }
 
-
         //TODO
         [HttpPost]
-        [Route("generate-agent-url")]       
+        [Route("generate-agent-url")]
         public async Task<IHttpActionResult> Generate_Url(object agent)
         {
             var token = Request.Headers.GetValues("access_token").FirstOrDefault();
@@ -64,6 +66,7 @@ namespace SistemaCore_BDEO.Controllers
                 using (var client = new HttpClient())
                 {
                     var key = ConfigurationManager.AppSettings["gen-url"];
+
                     var url = client.BaseAddress = new Uri(key);
 
                     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -74,7 +77,9 @@ namespace SistemaCore_BDEO.Controllers
 
                     var cuerpo = await respuesta.Content.ReadAsStringAsync();
 
-                    return NewMethod(respuesta, cuerpo);
+                    var rest = Validacion(cuerpo);
+
+                    return NewMethod(respuesta, rest);
 
 
                 }
@@ -87,21 +92,16 @@ namespace SistemaCore_BDEO.Controllers
         }
 
         //Listo
-        [HttpPost]        
+        [HttpPost]
         [Route()]
-        public async Task<IHttpActionResult> Post(object model, [FromUri]string access_token)
-        {
-            
-            //string token = string.Empty;
-
-            
-            //token = Request.Headers.GetValues("access_token").FirstOrDefault();
+        public async Task<IHttpActionResult> Post(object model, [FromUri] string access_token)
+        {         
 
             try
             {
                 using (var client = new HttpClient())
                 {
-                    
+
                     Uri url = client.BaseAddress = new Uri(BaseUrl);
 
                     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -110,9 +110,11 @@ namespace SistemaCore_BDEO.Controllers
 
                     var respuesta = await client.PostAsJsonAsync(url, model);
 
-                    var cuerpo = await respuesta.Content.ReadAsStringAsync();                   
+                    var cuerpo = await respuesta.Content.ReadAsStringAsync();
 
-                    return NewMethod(respuesta,cuerpo);
+                    var rest = Validacion(cuerpo);
+
+                    return NewMethod(respuesta, rest);
 
                 }
             }
@@ -124,13 +126,13 @@ namespace SistemaCore_BDEO.Controllers
 
         //Listo
         [HttpPost]
-        [Route]        
+        [Route]
         public async Task<IHttpActionResult> Post(object model)
         {
 
             string token = string.Empty;
 
-            token = Request.Headers.GetValues("access_token").FirstOrDefault();           
+            token = Request.Headers.GetValues("access_token").FirstOrDefault();
 
             try
             {
@@ -147,7 +149,9 @@ namespace SistemaCore_BDEO.Controllers
 
                     var cuerpo = await respuesta.Content.ReadAsStringAsync();
 
-                    return NewMethod(respuesta, cuerpo);
+                    var rest = Validacion(cuerpo);
+
+                    return NewMethod(respuesta, rest);
 
                 }
             }
@@ -161,8 +165,8 @@ namespace SistemaCore_BDEO.Controllers
         //Listo
         [HttpGet()]
         [Route("users")]
-        public async Task<IHttpActionResult> users(string type)
-        {
+        public async Task<IHttpActionResult> users(string type= "agent")
+        {   
 
             var token = Request.Headers.GetValues("access_token").FirstOrDefault();
 
@@ -172,20 +176,22 @@ namespace SistemaCore_BDEO.Controllers
                 {
 
                     var key = ConfigurationManager.AppSettings["users"];
-                    var url = httpCliente.BaseAddress = new Uri(key);
+                    var ruta = key + "?type="  + type;
+                    var url = httpCliente.BaseAddress = new Uri(ruta);
 
 
                     httpCliente.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
                     httpCliente.DefaultRequestHeaders.Add("access_token", token);
+                    
 
                     var respuesta = await httpCliente.GetAsync(url);
 
-                    var cuerpo = await respuesta.Content.ReadAsStringAsync();                   
+                    var cuerpo = await respuesta.Content.ReadAsStringAsync();
 
-                    
+                    var rest = Validacion(cuerpo);
 
-                    return NewMethod(respuesta,cuerpo);                    
+                    return NewMethod(respuesta, rest);                    
 
                 }
             }
@@ -198,8 +204,8 @@ namespace SistemaCore_BDEO.Controllers
 
         //Listo
         [HttpGet]
-        [Route("{limit:int?}/{offset:int?}/{status:int?}")]
-        public async Task<IHttpActionResult> InterventionParams(int limit = 100, int offset = 0, int status = 3)
+        [Route("Parametros/{limit:int?}/{offset:int?}/{status:int?}")]
+        public async Task<IHttpActionResult> GetParam(int limit = 100, int offset = 0, int status = 3)
         {
             var uri = BaseUrl + "?limit=" + limit + "&offset=" + offset + "&status=" + status;
 
@@ -220,9 +226,9 @@ namespace SistemaCore_BDEO.Controllers
 
                     var cuerpo = await respuesta.Content.ReadAsStringAsync();
 
-                    
+                    var rest = Validacion(cuerpo);
 
-                    return NewMethod(respuesta,cuerpo);
+                    return NewMethod(respuesta, rest);
 
                 }
             }
@@ -233,10 +239,10 @@ namespace SistemaCore_BDEO.Controllers
 
         }
 
-        ////Listo
+        //Listo
         [HttpGet]
         [Route("{id}")]
-        public async Task<IHttpActionResult> Intervention_Id(string id)
+        public async Task<IHttpActionResult> Get(string id)
         {
             var uri = BaseUrl + id;
 
@@ -256,9 +262,45 @@ namespace SistemaCore_BDEO.Controllers
 
                     var cuerpo = await respuesta.Content.ReadAsStringAsync();
 
-                   
+                    var rest = Validacion(cuerpo);
 
-                    return NewMethod(respuesta,cuerpo);
+                    return NewMethod(respuesta, rest);
+
+                }
+            }
+            catch (HttpResponseException e)
+            {
+                throw new HttpResponseException(e.Response);
+            }
+
+        }
+
+        //Listo
+        [HttpGet]
+        [Route("{id}")]
+        public async Task<IHttpActionResult> Get(string id, [FromUri]string access_token)
+        {
+            var uri = BaseUrl + id;
+
+            //var token = Request.Headers.GetValues("access_token").FirstOrDefault();
+
+            try
+            {
+                using (var httpCliente = new HttpClient())
+                {
+                    var url = httpCliente.BaseAddress = new Uri(uri);
+
+                    httpCliente.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    httpCliente.DefaultRequestHeaders.Add("access_token", access_token);
+
+                    var respuesta = await httpCliente.GetAsync(url);
+
+                    var cuerpo = await respuesta.Content.ReadAsStringAsync();
+
+                    var rest = Validacion(cuerpo);
+
+                    return NewMethod(respuesta, rest);
 
                 }
             }
@@ -294,8 +336,9 @@ namespace SistemaCore_BDEO.Controllers
 
                     var cuerpo = await respuesta.Content.ReadAsStringAsync();
 
-                    
-                    return NewMethod(respuesta,cuerpo);
+                    var rest = Validacion(cuerpo);
+
+                    return NewMethod(respuesta, rest);
                     
 
                 }
@@ -329,9 +372,12 @@ namespace SistemaCore_BDEO.Controllers
 
                     var respuesta = await httpCliente.DeleteAsync(url);
 
-                    var cuerpo = await respuesta.Content.ReadAsStringAsync();                   
+                    var cuerpo = await respuesta.Content.ReadAsStringAsync();
 
-                    return NewMethod(respuesta, cuerpo);
+                    var rest = Validacion(cuerpo);                 
+
+
+                    return NewMethod(respuesta, rest);
 
                 }
             }
@@ -342,70 +388,94 @@ namespace SistemaCore_BDEO.Controllers
 
         }
 
-        public IHttpActionResult NewMethod(HttpResponseMessage respuesta, string cuerpo)
-        {
-            var texto = cuerpo.Replace("\"", " ").Trim();
-
+        public IHttpActionResult NewMethod(HttpResponseMessage respuesta, object result)
+        {   
 
             switch (respuesta.StatusCode)
             {
 
                 case HttpStatusCode.OK:
-
-                    result = JObject.Parse(cuerpo);
+                    
                     return Ok(result);
 
                 case HttpStatusCode.Unauthorized:
 
                    
-                    return Content(HttpStatusCode.Unauthorized, texto);
+                    return Content(HttpStatusCode.Unauthorized, result);
 
 
                 case HttpStatusCode.NoContent:
 
-                    result = JObject.Parse(cuerpo);
+                    
                     return Content(HttpStatusCode.NoContent, result);
 
 
                 case HttpStatusCode.BadRequest:
-
                     
-                    result = JObject.Parse(cuerpo);
+                 
                     return Content(HttpStatusCode.BadRequest, result);
 
 
                 case HttpStatusCode.Forbidden:
-
-                    result = JObject.Parse(cuerpo);
+                    
                     return Content(HttpStatusCode.Forbidden, result);
 
 
                 case HttpStatusCode.NotFound:
 
-                    result = JObject.Parse(cuerpo);
+                    //result = JObject.Parse(cuerpo);
                     return Content(HttpStatusCode.NotFound, result);
 
 
                 case HttpStatusCode.MethodNotAllowed:
 
-                    result = JObject.Parse(cuerpo);
+                   
                     return Content(HttpStatusCode.MethodNotAllowed, result);
 
                 case HttpStatusCode.NotImplemented:
 
-                    // TODO: ARREGLAR ESTO
-                    result = JObject.Parse(cuerpo);
+                  
                     return Content(HttpStatusCode.NotImplemented, result);
 
                 case HttpStatusCode.BadGateway:
-                    result = JObject.Parse(cuerpo);
+             
                     return Content(HttpStatusCode.MethodNotAllowed, result);
-
                 default:
 
                     throw new HttpResponseException(respuesta.StatusCode);
 
             }
+        }
+
+        public object Validacion(string cuerpo)
+        {
+            int contador = 0;
+            object result = new object();
+
+            for (int i = 0; i < cuerpo.Length; i++)
+            {
+
+                var caracter = cuerpo[i];
+
+                if (caracter == '\"')
+                    contador++;
+            }
+
+            if (contador == 0)
+            {
+                return cuerpo;
+            }
+
+
+            if (cuerpo.Contains("\"") && contador<=2)
+            {
+               return  result = cuerpo.Replace("\"", " ").Trim();
+            }
+            else
+            {
+                return JObject.Parse(cuerpo);
+            }
+            
         }
     }
 }

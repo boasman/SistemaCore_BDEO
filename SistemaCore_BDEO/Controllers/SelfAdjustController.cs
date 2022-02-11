@@ -12,7 +12,7 @@ using System.Web.Http;
 
 namespace SistemaCore_BDEO.Controllers
 {
-    [RoutePrefix("api/v1/SelfAdjust")]
+    [RoutePrefix("api/SelfAdjust")]
     public class SelfAdjustController : ApiController
     {
         private JObject result = new JObject();
@@ -24,9 +24,10 @@ namespace SistemaCore_BDEO.Controllers
 
         //Listo
         [HttpPost]
+        [Route]
         public async Task<IHttpActionResult> Selfadjust_Post(object model)
         {
-            
+
 
             var token = Request.Headers.GetValues("access_token").FirstOrDefault();
 
@@ -36,7 +37,7 @@ namespace SistemaCore_BDEO.Controllers
                 {
                     var url = client.BaseAddress = new Uri(BaseUrl);
 
-                    client.DefaultRequestHeaders.Accept.Add( new MediaTypeWithQualityHeaderValue("application/json"));
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
                     client.DefaultRequestHeaders.Add("access_token", token);
 
@@ -44,9 +45,9 @@ namespace SistemaCore_BDEO.Controllers
 
                     var cuerpo = await respuesta.Content.ReadAsStringAsync();
 
-                    result = JObject.Parse(cuerpo);
+                    var resultado = Validacion(cuerpo);
 
-                    return NewMethod(respuesta,cuerpo);
+                    return NewMethod(respuesta, resultado);
                 }
             }
             catch (HttpResponseException e)
@@ -61,7 +62,7 @@ namespace SistemaCore_BDEO.Controllers
         [Route("external_selfadjust")]
         public async Task<IHttpActionResult> external_selfadjust(object model)
         {
-            var uri = BaseUrl +  "external_selfadjust";
+            var uri = ConfigurationManager.AppSettings["external_selfadjust"];
 
             var token = Request.Headers.GetValues("access_token").FirstOrDefault();
 
@@ -72,15 +73,17 @@ namespace SistemaCore_BDEO.Controllers
 
                     var url = client.BaseAddress = new Uri(uri);
 
-                    client.DefaultRequestHeaders.Accept.Add( new MediaTypeWithQualityHeaderValue("application/json"));
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
                     client.DefaultRequestHeaders.Add("access_token", token);
 
                     var respuesta = await client.PostAsJsonAsync(url, model);
 
-                    var cuerpo = await respuesta.Content.ReadAsStringAsync();                    
+                    var cuerpo = await respuesta.Content.ReadAsStringAsync();
 
-                    return NewMethod(respuesta,cuerpo);
+                    var resultado = Validacion(cuerpo);
+
+                    return NewMethod(respuesta, resultado);
                 }
             }
             catch (HttpResponseException e)
@@ -110,9 +113,10 @@ namespace SistemaCore_BDEO.Controllers
                     var respuesta = await httpCliente.GetAsync(url);
 
                     var cuerpo = await respuesta.Content.ReadAsStringAsync();
-                    
 
-                    return NewMethod(respuesta,cuerpo);
+                    var resultado = Validacion(cuerpo);
+
+                    return NewMethod(respuesta, resultado);
                 }
             }
             catch (HttpResponseException e)
@@ -140,13 +144,15 @@ namespace SistemaCore_BDEO.Controllers
 
                     httpCliente.DefaultRequestHeaders.Add("access_token", token);
 
-                    httpCliente.DefaultRequestHeaders.Accept.Add( new MediaTypeWithQualityHeaderValue("application/json"));
+                    httpCliente.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
                     var respuesta = await httpCliente.PutAsJsonAsync(url, model);
 
-                    var cuerpo = await respuesta.Content.ReadAsStringAsync();                    
+                    var cuerpo = await respuesta.Content.ReadAsStringAsync();
 
-                    return NewMethod(respuesta,cuerpo);
+                    var resultado = Validacion(cuerpo);
+
+                    return NewMethod(respuesta, resultado);
 
                 }
             }
@@ -177,9 +183,11 @@ namespace SistemaCore_BDEO.Controllers
 
                     var respuesta = await httpCliente.DeleteAsync(url);
 
-                    var cuerpo = await respuesta.Content.ReadAsStringAsync();                    
+                    var cuerpo = await respuesta.Content.ReadAsStringAsync();
 
-                    return NewMethod(respuesta, cuerpo);
+                    var resultado = Validacion(cuerpo);
+
+                    return NewMethod(respuesta, resultado);
 
                 }
             }
@@ -190,67 +198,103 @@ namespace SistemaCore_BDEO.Controllers
 
         }
 
-        public IHttpActionResult NewMethod(HttpResponseMessage respuesta, string cuerpo)
+        public IHttpActionResult NewMethod(HttpResponseMessage respuesta, object result)
         {
-            var res = cuerpo.Replace("\"", " ").Trim();
 
             switch (respuesta.StatusCode)
             {
 
                 case HttpStatusCode.OK:
 
-                    result = JObject.Parse(cuerpo);
                     return Ok(result);
 
                 case HttpStatusCode.Unauthorized:
 
-                   
-                    return Content(HttpStatusCode.Unauthorized, res);
+
+                    return Content(HttpStatusCode.Unauthorized, result);
 
 
                 case HttpStatusCode.NoContent:
 
-                    result = JObject.Parse(cuerpo);
+
                     return Content(HttpStatusCode.NoContent, result);
 
 
                 case HttpStatusCode.BadRequest:
 
-                    result = JObject.Parse(cuerpo);
+
                     return Content(HttpStatusCode.BadRequest, result);
 
 
                 case HttpStatusCode.Forbidden:
 
-                    result = JObject.Parse(cuerpo);
                     return Content(HttpStatusCode.Forbidden, result);
 
 
                 case HttpStatusCode.NotFound:
 
-                    result = JObject.Parse(cuerpo);
+                    //result = JObject.Parse(cuerpo);
                     return Content(HttpStatusCode.NotFound, result);
 
 
                 case HttpStatusCode.MethodNotAllowed:
 
-                    result = JObject.Parse(cuerpo);
+
                     return Content(HttpStatusCode.MethodNotAllowed, result);
 
                 case HttpStatusCode.NotImplemented:
 
-                    result = JObject.Parse(cuerpo);
+
                     return Content(HttpStatusCode.NotImplemented, result);
 
                 case HttpStatusCode.BadGateway:
-                    result = JObject.Parse(cuerpo);
-                    return Content(HttpStatusCode.MethodNotAllowed, result);
 
+                    return Content(HttpStatusCode.MethodNotAllowed, result);
                 default:
 
                     throw new HttpResponseException(respuesta.StatusCode);
 
             }
+        }
+
+        public object Validacion(string cuerpo)
+        {
+            //int contador = 0;
+            //object result = new object();
+
+
+
+            //for (int i = 0; i < cuerpo.Length; i++)
+            //{
+
+            //    var caracter = cuerpo[i];
+
+            //    if (caracter == '\"')
+            //        contador++;
+            //}
+
+
+
+            //if (cuerpo.Contains("\"") && contador <= 2)
+            //{
+            //    return result = cuerpo.Replace("\"", " ").Trim();
+            //}
+            //else
+            //{
+            //    return JObject.Parse(cuerpo);
+            //}
+
+            if (cuerpo.Contains("{") )
+            {
+
+                return JObject.Parse(cuerpo);
+                
+            }
+            else
+            {
+                return cuerpo.Replace("\"", " ").Trim();
+            }
+
         }
     }
 }
