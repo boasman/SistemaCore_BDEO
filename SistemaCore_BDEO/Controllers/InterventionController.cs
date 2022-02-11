@@ -128,11 +128,9 @@ namespace SistemaCore_BDEO.Controllers
         [HttpPost]
         [Route]
         public async Task<IHttpActionResult> Post(object model)
-        {
+        {            
 
-            string token = string.Empty;
-
-            token = Request.Headers.GetValues("access_token").FirstOrDefault();
+            var token = Request.Headers.GetValues("access_token").FirstOrDefault();
 
             try
             {
@@ -204,7 +202,8 @@ namespace SistemaCore_BDEO.Controllers
 
         //Listo
         [HttpGet]
-        [Route("Parametros/{limit:int?}/{offset:int?}/{status:int?}")]
+        
+        [Route]
         public async Task<IHttpActionResult> GetParam(int limit = 100, int offset = 0, int status = 3)
         {
             var uri = BaseUrl + "?limit=" + limit + "&offset=" + offset + "&status=" + status;
